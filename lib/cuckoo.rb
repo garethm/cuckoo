@@ -3,7 +3,7 @@ module Cuckoo
     def initialize
       @size = 13
       @store = Array.new @size
-      @hash1 = method(:djb_hash)
+      @hash1 = method(:ap_hash)
       @hash2 = method(:bkdr_hash)
     end
 
@@ -20,6 +20,26 @@ module Cuckoo
       hash = 0
       str.bytes.each do |b|
         hash = (hash * seed + b) % 4294967296
+      end
+      hash % @size
+    end
+
+    def sdbm_hash str
+      hash = 0
+      str.bytes.each do |b|
+        hash = (b + (hash << 6) + (hash << 16) - hash) % 4294967296
+      end
+      hash % @size
+    end
+
+    def ap_hash str
+      hash = 0
+      str.bytes.each do |b|
+        if b & 1 == 0
+          hash = (hash ^ ((hash << 7) ^ b ^ (hash >> 3))) % 4294967296
+        else
+          hash = (hash ^ (~((hash << 11) ^ b ^ (hash >> 5)))) % 4294967296
+        end
       end
       hash % @size
     end
