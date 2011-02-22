@@ -28,6 +28,24 @@ module Cuckoo
         table.add "john", "abc"
         expect { table.add "john", "qrs" }.to raise_error
       end
+
+      it "can store 13 values" do
+        table = Cuckoo.new
+        table.add "ella", "mansfield"
+        table.add "joan", "sutherland"
+        table.add "livy", "pisapio"
+        table.add "lorry", "prince"
+        table.add "mariejeanne", "spofford"
+        table.add "rori", "machado"
+        table.add "leena", "kornhaber"
+        table.add "fidelia", "clark"
+        table.add "marget", "hayford"
+        table.add "kerry", "white"
+        table.add "abra", "washienko"
+        table.add "carmencita", "bratko"
+        table.add "gui", "schwertfeger"
+        table.add "buffy", "rish"
+      end
     end
 
     describe :find do

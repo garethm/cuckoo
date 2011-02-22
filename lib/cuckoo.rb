@@ -4,7 +4,7 @@ module Cuckoo
       @size = 13
       @store = Array.new @size
       @hash_params1 = {:seed => 5381, :shift => 5}
-      @hash_params2 = {:seed => 4331, :shift => 5}
+      @hash_params2 = {:seed => 4321, :shift => 5}
     end
 
     def djb_hash hash_params, str
@@ -15,17 +15,50 @@ module Cuckoo
       hash % @size
     end
 
-    def add key, value
-      hash = djb_hash @hash_params1, key
-      entry = @store[hash]
-      raise "Already defined" if entry != nil && entry[0] == key
-      if entry != nil && entry[0] != key then
-        hash = djb_hash @hash_params2, key
-        entry = @store[hash]
-        raise "Already defined" if entry != nil && entry[0] == key
-        raise "No suitable slot was found" if entry != nil && entry[0] != key
+    def add_cuckoo key, value, key_history
+      print "  Attempting to add #{key}\n"
+
+      hash1 = djb_hash @hash_params1, key
+      entry1 = @store[hash1]
+      hash2 = djb_hash @hash_params2, key
+      entry2 = @store[hash2]
+
+      raise "Already defined" if entry1 != nil && entry1[0] == key
+      raise "Already defined" if entry2 != nil && entry2[0] == key
+      
+      if entry1 == nil then
+        @store[hash1] = [key, value]
+      elsif entry2 == nil then
+        @store[hash2] = [key, value]
+      elsif not key_history.include? entry1[0]
+        @store[hash1] = [key, value]
+        key_history << entry1[0]
+        add_cuckoo entry1[0], entry1[1], key_history
+      elsif not key_history.include? entry2[0]
+        @store[hash2] = [key, value]
+        key_history << entry2[0]
+        add_cuckoo entry2[0], entry2[1], key_history
+      else
+        resize @size * 2 + 1
+        add_cuckoo key, value, []
       end
-      @store[hash] = [key, value]
+    end
+
+    def resize new_size
+      print "  Resizing hash table to #{new_size}\n"
+      old_store = @store
+      @size = new_size
+      @store = Array.new @size
+      old_store.each do |entry|
+        next if entry == nil
+        add_cuckoo entry[0], entry[1], []
+      end
+      print "  Resize complete\n"
+    end
+
+    def add key, value
+      print "==============\nadd #{key} => #{value}\n"
+      add_cuckoo key, value, []
     end
 
     def find key
